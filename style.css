@@ -1,0 +1,156 @@
+/* styles.css */
+
+*, *::after, *::before {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: .5rem;
+    cursor: pointer;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.deck {
+    height: 100%;
+    width: 100%;
+    border: 1px solid black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem;
+    border-radius: .5rem;
+    color: white;
+    user-select: none;
+    position: relative;
+}
+
+.North-deck, .South-deck, .East-deck, .West-deck {
+    grid-column: 2;
+    grid-row: 2;
+}
+.North-deck {
+        background-color: green;
+        grid-column: 2;
+        grid-row: 1;
+    }
+    
+    .South-deck {
+        background-color: blue;
+        grid-column: 2;
+        grid-row: 3;
+    }
+    
+    .West-deck {
+        background-color: blueviolet;
+        grid-column: 1;
+        grid-row: 2;
+    }
+    
+    .East-deck {
+        background-color: darkgoldenrod;
+        grid-column: 3;
+        grid-row: 2;
+    }
+
+.North-deck {
+    background-color: green;
+
+}
+
+.South-deck {
+    background-color: blue;
+}
+
+.West-deck {
+    background-color: blueviolet;
+
+}
+
+.East-deck {
+    background-color: darkgoldenrod;
+
+}
+
+.text {
+    grid-column: span 3;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card {
+    height: 100%;
+    width: 100%;
+    border: 1px solid black;
+    border-radius: .5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 4rem;
+    position: relative;
+    color: gray; /* Neutral color for card text */
+}
+
+.card.red {
+    color: red;
+}
+
+.card.black {
+    color: black;
+}
+
+.card.heart::before,
+.card.heart::after {
+    content: "♥";
+    color: red;
+    position: absolute;
+    font-size: 1rem;
+}
+
+.card.diamond::before,
+.card.diamond::after {
+    content: "♦";
+    color: red;
+    position: absolute;
+    font-size: 1rem;
+}
+
+.card.club::before,
+.card.club::after {
+    content: "♣";
+    color: black;
+    position: absolute;
+    font-size: 1rem;
+}
+
+.card.spade::before,
+.card.spade::after {
+    content: "♠";
+    color: black;
+    position: absolute;
+    font-size: 1rem;
+}
+
+.card::before,
+.card::after {
+    position: absolute;
+    content: attr(data-value);
+    font-size: 1rem;
+}
+
+.card::before {
+    top: .5rem;
+    left: .5rem;
+}
+
+.card::after {
+    bottom: .5rem;
+    right: .5rem;
+    transform: rotate(180deg);
+}
