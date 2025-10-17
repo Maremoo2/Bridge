@@ -7,7 +7,7 @@ function updatePlayerNames() {
         .then(players => {
             // Update usernames on the HTML page
             players.forEach(player => {
-                const position = player.position.toLowerCase();
+                const position = player.position; // Keep original case (North, South, East, West)
                 const usernameElement = document.querySelector(`.${position}-deck .username`);
                 if (usernameElement) {
                     usernameElement.textContent = player.name;
@@ -60,7 +60,7 @@ setInterval(updatePlayerNames, 5000); // Refresh every 5 seconds (adjust as need
             });
 
             // Update the number of cards text
-            const cardCountElement = document.querySelector(`.${position.toLowerCase()}-deck .card-count`);
+            const cardCountElement = document.querySelector(`.${position}-deck .card-count`);
             if (cardCountElement) {
                 cardCountElement.textContent = `Antall kort: ${count}`;
             }
@@ -91,7 +91,7 @@ document.getElementById('dealBtn').addEventListener('click', () => {
     // Add click event handlers to player containers to fetch and display their cards
     document.querySelectorAll('.deck').forEach(deck => {
         deck.addEventListener('click', () => {
-            const position = deck.classList[0].split('-')[0]; // Extract position from class
+            const position = deck.classList[0].split('-')[0]; // Extract position from class (e.g., 'North-deck' -> 'North')
             fetchAndDisplayCards(position);
         });
     });
