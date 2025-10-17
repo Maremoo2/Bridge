@@ -1,4 +1,15 @@
-//Server.ts
+/**
+ * Server.ts
+ *
+ * Express-basert HTTP-server for Bridge-appen.
+ *
+ * Hovedansvar:
+ * - Statisk serving av klienten (client/dist)
+ * - REST API for registrering av spillere (NO/EN aliaser)
+ * - Kortstokk: dele ut hender, hente hender (NO/EN aliaser), reset spill
+ * - Auksjon/bidding: registrere bud, hente budhistorikk, enkel state-inspeksjon
+ * - Små hjelpere (CORS, favicon, API-404 som JSON)
+ */
 import express, { Express, Request, Response, NextFunction } from 'express';
 import path from 'path';
 import http from 'http';
@@ -9,9 +20,8 @@ import { BudOgSpørsmål, Budtype } from './BidAndAsk';
 const app: Express = express();
 const port = 2000;
 
+// Gjør at Express kan lese JSON-body i POST/PUT-forespørsler
 app.use(express.json());
-const bodyParser = require('body-parser');
-app.use(bodyParser.json());
 
 // Mellomvare for å håndtere CORS-headere
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -21,19 +31,40 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-// Server statiske filer
-app.use("/", express.static(path.join(__dirname, "../../Client/dist")));
+// Server statiske filer (bygget klient-app). Forside/HTML ligger i client/dist
+app.use("/", express.static(path.join(__dirname, "../../client/dist")));
 
-// Spillere
+// Spillere (enkelt minnelager i server-prosessen)
 export let players: { name: string, position: Posisjon }[] = [];
 
-// Sluttpunkt for å hente listen over spillere
+// Hjelper for å mappe Posisjon (NO) til engelske strenger som klienten forventer
+const positionToEnglish = (p: Posisjon): 'North' | 'South' | 'East' | 'West' => {
+  switch (p) {
+    case Posisjon.Nord: return 'North';
+    case Posisjon.Sør: return 'South';
+    case Posisjon.Øst: return 'East';
+    case Posisjon.Vest: return 'West';
+  }
+};
+
+type ClientCard = { suit: string; rank: string };
+// Gjør om internt Kort-objekt til formen klienten forventer { suit, rank }
+const serializeCard = (k: Kort): ClientCard => ({ suit: k.farge, rank: k.navn });
+
+// Sluttpunkt for å hente listen over spillere (NO)
 app.get('/api/spillere', (req: Request, res: Response) => {
   res.json(players);
 });
 
-// Sluttpunkt for å registrere spillere (opprett en ny spiller)
+// Endpoint expected by client: list players with English positions
+app.get('/api/players', (req: Request, res: Response) => {
+  const clientPlayers = players.map(p => ({ name: p.name, position: positionToEnglish(p.position) }));
+  res.json(clientPlayers);
+});
+
+// Sluttpunkt for å registrere spillere (opprett en ny spiller) (NO)
 app.post('/api/registrer', (req: Request, res: Response) => {
+  // Maks 4 spillere
   if (players.length >= 4) {
     return res.status(400).json({ success: false, error: 'Maksimalt antall spillere nådd' });
   }
@@ -59,10 +90,34 @@ app.post('/api/registrer', (req: Request, res: Response) => {
   return res.json({ success: true, player: newPlayer, message: `${playerName} registrert vellykket` });
 });
 
-// Bud og Spørsmål
-const budOgSpørsmål = new BudOgSpørsmål(); // Opprett en instans av BudOgSpørsmål
+// English alias expected by client
+app.post('/api/register', (req: Request, res: Response) => {
+  // Same semantics som /api/registrer, men engelske feilmeldinger
+  if (players.length >= 4) {
+    return res.status(400).json({ success: false, error: 'Maximum number of players reached' });
+  }
 
-// Eksempelbruk
+  const playerName: string = req.body.playerName;
+  if (!playerName) {
+    return res.status(400).json({ success: false, error: 'playerName is required' });
+  }
+
+  const positions: Posisjon[] = [Posisjon.Nord, Posisjon.Sør, Posisjon.Øst, Posisjon.Vest];
+  const availablePositions = positions.filter(pos => !players.some(player => player.position === pos));
+  if (availablePositions.length === 0) {
+    return res.status(400).json({ success: false, error: 'All positions are taken' });
+  }
+  const randomPosition = availablePositions[Math.floor(Math.random() * availablePositions.length)];
+
+  const newPlayer = { name: playerName, position: randomPosition };
+  players.push(newPlayer);
+  return res.json({ success: true, player: newPlayer, message: `${playerName} registered` });
+});
+
+// Bud og Spørsmål
+let budOgSpørsmål = new BudOgSpørsmål(); // Opprett en instans av BudOgSpørsmål
+
+// Registrer et bud fra en posisjon. Body: { position: Posisjon, bid: string }
 app.post('/api/bud', (req: Request, res: Response) => {
   const { position, bid } = req.body;
   if (!position || !bid) {
@@ -83,12 +138,27 @@ app.get('/api/budhistorikk', (req, res) => {
   res.json(budhistorikk);
 });
 
+// Nåværende auksjons-tilstand (neste budgiver, høyeste kontrakt, historikk)
+app.get('/api/state', (_req: Request, res: Response) => {
+  const next = budOgSpørsmål.getNesteBudgiver();
+  const highest = budOgSpørsmål.getHøyesteKontrakt();
+  return res.json({ nextBidder: next, highestContract: highest, history: budOgSpørsmål.getBudhistorikk() });
+});
+
+// Lagoppstilling (NS og EW) av registrerte spillere
+app.get('/api/teams', (_req: Request, res: Response) => {
+  const NS = players.filter(p => p.position === Posisjon.Nord || p.position === Posisjon.Sør).map(p => p.name);
+  const EW = players.filter(p => p.position === Posisjon.Øst || p.position === Posisjon.Vest).map(p => p.name);
+  res.json({ NS, EW });
+});
+
 // Kortstokk
-const kortstokk = new Deck(); // Opprett en instans av Deck
+let kortstokk = new Deck(); // Opprett en instans av Deck
 
 let nordHånd: Kort[], østHånd: Kort[], sydHånd: Kort[], vestHånd: Kort[]; // Definer hender globalt
 let kortDelt = false; // Variabel for å spore om kort er delt
 
+// NO: Del ut alle 52 kort til 4 hender à 13. Returnerer også telling per hånd
 app.get('/api/del', (req: Request, res: Response) => {
   if (kortDelt) {
     return res.status(400).json({ success: false, message: 'Kortene er allerede delt' });
@@ -108,6 +178,7 @@ app.get('/api/del', (req: Request, res: Response) => {
   const sydHåndAntall = sydHånd.length;
   const vestHåndAntall = vestHånd.length;
 
+  console.log('Kort delt (NO)');
   // Returner hendene til alle spillere sammen med antall kort
   return res.json({
     success: true,
@@ -125,6 +196,20 @@ app.get('/api/del', (req: Request, res: Response) => {
       vest: vestHåndAntall
     }
   });
+});
+
+// English alias expected by client
+app.get('/api/deal', (req: Request, res: Response) => {
+  if (kortDelt) {
+    return res.status(400).json({ success: false, message: 'Cards already dealt' });
+  }
+  nordHånd = kortstokk.delUt();
+  østHånd = kortstokk.delUt();
+  sydHånd = kortstokk.delUt();
+  vestHånd = kortstokk.delUt();
+  kortDelt = true;
+  console.log('Cards dealt');
+  return res.json({ success: true, message: 'Cards dealt' });
 });
 
 
@@ -172,6 +257,19 @@ app.get('/api/vest-hand', (req: Request, res: Response) => {
   });
 });
 
+// Reset endpoint to allow re-dealing
+app.post('/api/reset', (_req: Request, res: Response) => {
+  kortstokk = new Deck();
+  nordHånd = [] as unknown as Kort[];
+  østHånd = [] as unknown as Kort[];
+  sydHånd = [] as unknown as Kort[];
+  vestHånd = [] as unknown as Kort[];
+  kortDelt = false;
+  budOgSpørsmål = new BudOgSpørsmål();
+  console.log('Game reset');
+  return res.json({ success: true, message: 'Reset done' });
+});
+
 
 // Opprett en HTTP-server og fest Express-appen
 const server = http.createServer(app);
@@ -186,4 +284,12 @@ process.on('SIGTERM', () => {
   server.close(() => {
     console.log('Serveren terminert');
   });
+});
+
+// Favicon to avoid 404 noise
+app.get('/favicon.ico', (_req: Request, res: Response) => res.status(204).end());
+
+// Catch-all 404 JSON for API
+app.use('/api', (req: Request, res: Response) => {
+  res.status(404).json({ error: 'Not Found', path: req.path });
 });
