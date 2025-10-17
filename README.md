@@ -16,7 +16,7 @@ git push origin main
 2. Bruk git pull-kommandoen for å trekke ned eventuelle oppdateringer fra GitHub til din lokale kopi av repositoryet. 
 
 ---------------------------- POSTMAN COMMANDS-----------------------------------------
-1. Registrer spillere: Send en POST-forespørsel til http://localhost:2000/api/registrer med JSON-data i forespørselens kropp som inneholder spillernavnet. For eksempel::
+1. Registrer spillere: Send en POST-forespørsel til http://localhost:2000/api/registrer eller /api/register med JSON-data i forespørselens kropp som inneholder spillernavnet. For eksempel::
 
 kopier kode:
 {
@@ -24,7 +24,7 @@ kopier kode:
 }
 Dette vil registrere en spiller med navnet "John" og gi dem en tilfeldig plass (Nord, Sør, Øst, Vest). Den vil også si ifra når det er mer enn 4 spillere som prøver på registrere seg.
 
-1. Få liste over spillere: Send en GET-forespørsel til http://localhost:2000/api/spillere for å hente listen over registrerte spillere.
+1. Få liste over spillere: Send en GET-forespørsel til http://localhost:2000/api/spillere eller /api/players for å hente listen over registrerte spillere.
 
 1. Gi bud: Send en POST-forespørsel til http://localhost:2000/api/bud med JSON-data som inneholder posisjonen og budet. For eksempel:
 
@@ -44,8 +44,22 @@ kopier kode:
 
 GET-forespørselen http://localhost:2000/api/budhistorikk gjør at du får opp budhistorikken.
 
-1. Del ut kort: Send en GET-forespørsel til http://localhost:2000/api/del for å dele ut en hånd med kort fra kortstokken.
-GET http://localhost:2000/api/nord-hand
+1. Del ut kort: Send en GET-forespørsel til http://localhost:2000/api/del eller /api/deal for å dele ut en hånd med kort fra kortstokken.
+
+Se hender (NO):
+- GET /api/nord-hand
+- GET /api/ost-hand
+- GET /api/syd-hand
+- GET /api/vest-hand
+
+Se hender (EN):
+- GET /api/north-hand
+- GET /api/east-hand
+- GET /api/south-hand
+- GET /api/west-hand
+
+Reset spill:
+- POST /api/reset
 
 -------------------- MANGLER -----------------------------
 1. Man kan melde litt hva som helst
