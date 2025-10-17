@@ -1,7 +1,13 @@
-//Players.ts
+/**
+ * Players.ts
+ *
+ * Definerer farger og posisjoner, og et Express-router som kan
+ * håndtere spiller-registrering på norsk (ikke brukt direkte av Server.ts i dag).
+ * Filer i serveren importerer Posisjon-enen for å holde posisjonstyper konsistente.
+ */
 import express, { Request, Response } from 'express';
 
-// Definer Suit enum
+// Definer Suit enum (♥, ♠, ♦, ♣)
 export enum Farge {
   Hjerter = '♥',
   Spar = '♠',
@@ -9,7 +15,7 @@ export enum Farge {
   Kløver = '♣'
 }
 
-// Definer Position enum
+// Definer Position enum (nord/øst/sør/vest) – brukes på tvers av prosjektet
 export enum Posisjon {
   Nord = "nord",
   Øst = "øst",
@@ -19,7 +25,7 @@ export enum Posisjon {
 
 const router = express.Router();
 
-// Definer spillere med oppdaterte typer
+// Eksempelstruktur for spillere med kort (ikke brukt av hovedserver, men nyttig for videre arbeid)
 export const spillereMedKort: { navn: string; postkasseId: number; kort: { farge: Farge; navn: string; verdi: number }[] }[] = [
   { navn: 'Nord', postkasseId: 1, kort: [] },
   { navn: 'Øst', postkasseId: 2, kort: [] },
