@@ -1,4 +1,13 @@
-//Kortstokk.ts
+/**
+ * Kortstokk.ts
+ * En enkel 52-korts kortstokk for bridge:
+ *  - Farger: ♥, ♠, ♦, ♣
+ *  - Rang: 2 .. 10, Knekt, Dame, Konge, Ess
+ * Funksjoner:
+ *  - initialiser(): bygger en sortert kortstokk
+ *  - stokk(): Fisher–Yates for å stokke kortene
+ *  - delUt(): popper 13 kort som en hånd
+ */
 export class Kort {
     constructor(
         public farge: string,
@@ -29,7 +38,7 @@ export default class Kortstokk {
     }
 
     stokk(): void {
-        // Stokkingslogikk her
+        // Fisher–Yates stokking (in-place)
         for (let i = this.kort.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [this.kort[i], this.kort[j]] = [this.kort[j], this.kort[i]];
@@ -40,7 +49,7 @@ export default class Kortstokk {
         // Stokk kortstokken før utdeling
         this.stokk();
     
-        // Utdelingslogikk her
+        // Ta 13 øverste kort (pop fra baksiden) til en hånd
         const hånd: Kort[] = [];
         for (let i = 0; i < 13; i++) {
             hånd.push(this.kort.pop()!);
@@ -49,4 +58,3 @@ export default class Kortstokk {
     }
     
 }
-
