@@ -4,6 +4,7 @@
     "description": "Your description here",
     "main": "dist/Server.js",
     "scripts": {
+        "build": "tsc -p tsconfig.json",
         "start": "node server/dist/Server.js",
         "dev": "nodemon server/dist/Server.js",
         "test": "echo \"Error: no test specified\" && exit 1"
